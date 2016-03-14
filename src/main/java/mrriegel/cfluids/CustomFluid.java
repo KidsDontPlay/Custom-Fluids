@@ -2,17 +2,20 @@ package mrriegel.cfluids;
 
 import java.util.List;
 
+import org.lwjgl.input.Keyboard;
+
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.item.EnumRarity;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fluids.Fluid;
+import net.minecraftforge.fluids.FluidStack;
 
 public class CustomFluid {
 	String name;
 	String displayName;
-	String rarity = "common";
 	int luminosity;
 	int density = 1000;
 	int temperature = 300;
@@ -21,23 +24,48 @@ public class CustomFluid {
 	List<String> biomes;
 	List<Effect> effects;
 	boolean flammable;
+	boolean fireSource;
 	String material;
 	boolean generate;
 	int lakeSize;
 	int chunkChance;
 	int color = 0x6495ED;
-	Kind design = Kind.WATER;
+	Design design = Design.WATER;
 
-	enum Kind {
+	enum Design {
 		WATER, LAVA;
+
+		ResourceLocation getStill() {
+			if (this == WATER)
+				return new ResourceLocation(CustomFluids.MODID
+						+ ":fluid/liquid");
+			else if (this == LAVA)
+				return new ResourceLocation(CustomFluids.MODID
+						+ ":fluid/molten_metal");
+			return new ResourceLocation(CustomFluids.MODID
+					+ ":fluid/liquid");
+		}
+
+		ResourceLocation getFlowing() {
+			if (this == WATER)
+				return new ResourceLocation(CustomFluids.MODID
+						+ ":fluid/liquid_flow");
+			else if (this == LAVA)
+				return new ResourceLocation(CustomFluids.MODID
+						+ ":fluid/molten_metal_flow");
+			return new ResourceLocation(CustomFluids.MODID
+					+ ":fluid/liquid_flow");
+		}
 	}
 
-	public CustomFluid(String name, String displayName, String rarity,
-			int luminosity, int density, int temperature, int viscosity,
-			boolean gas, List<String> biomes, List<Effect> effects) {
+
+	public CustomFluid(String name, String displayName, int luminosity,
+			int density, int temperature, int viscosity, boolean gas,
+			List<String> biomes, List<Effect> effects, boolean flammable,
+			boolean fireSource, String material, boolean generate,
+			int lakeSize, int chunkChance, int color, Design design) {
 		this.name = name;
 		this.displayName = displayName;
-		this.rarity = rarity;
 		this.luminosity = luminosity;
 		this.density = density;
 		this.temperature = temperature;
@@ -45,30 +73,66 @@ public class CustomFluid {
 		this.gas = gas;
 		this.biomes = biomes;
 		this.effects = effects;
+		this.flammable = flammable;
+		this.fireSource = fireSource;
+		this.material = material;
+		this.generate = generate;
+		this.lakeSize = lakeSize;
+		this.chunkChance = chunkChance;
+		this.color = color;
+		this.design = design;
 	}
 
+
+
 	public Fluid toFluid() {
-		EnumRarity r = EnumRarity.COMMON;
-		for (EnumRarity t : EnumRarity.values())
-			if (rarity.equalsIgnoreCase(t.rarityName)) {
-				r = t;
-				break;
+		return new Fluid(name, null, null) {
+			@Override
+			public String getLocalizedName(FluidStack stack) {
+				return displayName;
 			}
-		return new Fluid(name, new ResourceLocation(name + "_still"),
-				new ResourceLocation(name + "_flow")).setRarity(r)
-				.setLuminosity(luminosity).setDensity(density)
+
+			@Override
+			public int getColor() {
+				int c = color;
+				if (((c >> 24) & 0xFF) == 0) {
+					c |= 0xFF << 24;
+				}
+				return c;
+			}
+
+			@Override
+			public ResourceLocation getStill() {
+				return design.getStill();
+			}
+
+			@Override
+			public ResourceLocation getFlowing() {
+				return design.getFlowing();
+			}
+
+		}.setLuminosity(luminosity).setDensity(density)
 				.setTemperature(temperature).setViscosity(viscosity)
 				.setGaseous(gas);
 	}
 
+	
+
 	@Override
 	public String toString() {
+		Minecraft.getMinecraft().displayGuiScreen(guiScreenIn);
+		Keyboard
 		return "CustomFluid [name=" + name + ", displayName=" + displayName
-				+ ", rarity=" + rarity + ", luminosity=" + luminosity
-				+ ", density=" + density + ", temperature=" + temperature
-				+ ", viscosity=" + viscosity + ", gas=" + gas + ", biomes="
-				+ biomes + ", effects=" + effects + "]";
+				+ ", luminosity=" + luminosity + ", density=" + density
+				+ ", temperature=" + temperature + ", viscosity=" + viscosity
+				+ ", gas=" + gas + ", biomes=" + biomes + ", effects="
+				+ effects + ", flammable=" + flammable + ", fireSource="
+				+ fireSource + ", material=" + material + ", generate="
+				+ generate + ", lakeSize=" + lakeSize + ", chunkChance="
+				+ chunkChance + ", color=" + color + ", design=" + design + "]";
 	}
+
+
 
 	public static class Effect {
 		String name;
